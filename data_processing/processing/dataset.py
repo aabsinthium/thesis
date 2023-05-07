@@ -12,6 +12,8 @@ class Dataset:
 
         self.crs = CustomCRS().get_crs()
         self.geo = gpd.read_file(f'{self.root}/data_processing/regions.json')
+        self.geo = self.geo[self.geo.ID_1.isin(
+            [4, 10, 13, 14, 21, 27, 31, 33, 40, 45, 51, 65, 75, 77, 87])]
         self.geo = self.geo.set_crs(4326)
         self.geo = self.geo.to_crs(self.crs)
 
@@ -32,6 +34,11 @@ class Dataset:
         ds = ds.rio.set_spatial_dims(x_dim='x', y_dim='y')
         ds = ds.rio.clip(geo.geometry.values)
 
+        ds = ds.drop('spatial_ref')
+
+        for var in list(ds.data_vars):
+            if 'grid_mapping' in ds[var].attrs.keys():
+                del ds[var].attrs['grid_mapping']
         return ds
 
     def combine(self):
@@ -43,11 +50,7 @@ class Dataset:
         fires = self.load_ds('fires').counts
 
         ds = xr.merge([fwi, forest, fires])
-        ds = self.clip(ds).drop('spatial_ref')
-
-        for var in list(ds.data_vars):
-            if 'grid_mapping' in ds[var].attrs.keys():
-                del ds[var].attrs['grid_mapping']
+        ds = self.clip(ds)
 
         ds.to_netcdf(f'{root}/data/{year}.nc')
 
