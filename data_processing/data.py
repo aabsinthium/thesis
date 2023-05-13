@@ -43,5 +43,5 @@ if fires_flag:
     fires = Fires(year)
     fires.get_counts_ds()
 
-dataset = Dataset(year)
+dataset = Dataset(year=year, region='rus')
 dataset.combine()
