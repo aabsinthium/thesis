@@ -6,18 +6,32 @@ from utils import CustomCRS
 
 
 class Dataset:
-    def __init__(self, year):
+    def __init__(self, year=None, region='rus'):
         self.year = year
         self.root = '/Users/artembadmaev/IT/thesis'
 
         self.crs = CustomCRS().get_crs()
         self.geo = gpd.read_file(f'{self.root}/data_processing/regions.json')
-        self.geo = self.geo[self.geo.ID_1.isin(
-            [4, 10, 13, 14, 21, 27, 31, 33, 40, 45, 51, 65, 75, 77, 87])]
+
+        if region == 'rus':
+            pass
+        elif region == 'sib':
+            self.geo = self.geo[self.geo.ID_1.isin(
+                [4, 10, 13, 14, 21, 27, 31, 33, 40, 45, 51, 65, 75, 77, 87])]
+        elif region == 'bur':
+            self.geo = self.geo[self.geo.ID_1 == 10]
+        else:
+            raise ValueError(
+                "Incorrect value passed in 'regions' argument! Should be either 'rus', 'sib', or 'bur'.")
+
         self.geo = self.geo.set_crs(4326)
         self.geo = self.geo.to_crs(self.crs)
 
     def load_ds(self, var):
+        if self.year is None:
+            raise ValueError(
+                "'year' argument is not defined!")
+
         root = self.root
         year = self.year
 
@@ -39,6 +53,7 @@ class Dataset:
         for var in list(ds.data_vars):
             if 'grid_mapping' in ds[var].attrs.keys():
                 del ds[var].attrs['grid_mapping']
+
         return ds
 
     def combine(self):
